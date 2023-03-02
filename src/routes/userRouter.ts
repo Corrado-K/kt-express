@@ -113,7 +113,7 @@ router.put('/:id', (req: Request, res: Response) => {
 
 })
 
-router. delete('/:id', (req: Request, res:Response) => {
+router.delete('/:id', (req: Request, res:Response) => {
 
      const user: IUser | undefined = users.find((i) => i.id === Number(req.params.id))
 
@@ -123,7 +123,13 @@ router. delete('/:id', (req: Request, res:Response) => {
           })
      }
 
-     users.filter(i => i !== user)
+     const newUsersList:IUser[] = users.filter((i) => i !== user)
+
+     res.send({
+          message: `User deleted`,
+          status: 200,
+          payload: newUsersList
+     })
      
      
 })
