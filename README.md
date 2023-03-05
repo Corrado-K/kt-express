@@ -1,1 +1,2 @@
-# KT-Express Node, Express, TS
+# KT-Express 
+Learning NodeJS, Express, TS
