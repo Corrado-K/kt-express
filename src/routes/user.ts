@@ -1,5 +1,6 @@
 import { randomInt } from "crypto"
-import { Request, Response, Router } from "express"
+import { Request, Response, Router, NextFunction } from 'express';
+import { body, validationResult } from 'express-validator'
 
 const router = Router()
 
@@ -53,14 +54,17 @@ router.get('/all', (req: Request, res: Response) => {
      })
 })
 
-router.get('/:id', (req: Request, res: Response) => {
+router.get('/:id', (req: Request, res: Response, next: NextFunction) => {
 
+     
      const user: IUser | undefined = users.find((i:IUser) => i.id === Number(req.params.id))
 
      if (!user) {
-          return res.status(404).json({
-               errors: [{ message: `User ${req.params.id} was not found` }],
-          })
+          // return res.status(404).json({
+          //      errors: [{ message: `User ${req.params.id} was not found` }],
+          // })
+
+          return next(new Error(`User with ID ${req.params.id} not found`));
      }
 
      res.json({
@@ -70,23 +74,44 @@ router.get('/:id', (req: Request, res: Response) => {
      })
 })
 
-router.post('/', (req: Request, res: Response) => {
-     
+router.post('/',  
+
+// (req: Request, res: Response) => {
+
+     body('name').isString(),
+     body('age').isInt(),
+     (req: Request, res: Response) => {
+
+     const error = validationResult(req)
+     if (!error.isEmpty()) {
+          return res.status(422).json({
+               errors: error.array()
+          })          
+     }
+
+     // const user: IUser = req.body
      const { name, age } = req.body
 
      const user: IUser = {
-          id: randomInt(100),
+          id: randomInt(10, 100),
           name: name,
           age: age
      }
 
      users.push(user)
-     
      res.json({
           message: `User created`,
           status: 200,
           payload: users
      })
+
+     // const { name, age } = req.body
+
+     // // const user: IUser = {
+     // //      id: randomInt(100),
+     // //      name: name,
+     // //      age: age
+     // // }
 
 })
 
