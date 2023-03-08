@@ -1,7 +1,9 @@
 import express,  {Express, Request, Response, urlencoded, json} from 'express'
 import dotenv from 'dotenv'
 import compression from 'compression'
+import multer from 'multer'
 
+import path from 'path'
 
 // Custom middleware
 import { requestLogger } from './middleware/middleware.requestLogger'
@@ -16,6 +18,16 @@ import { userValidationRules, validateUser } from './middleware/middleware.valid
 
 
 const app: Express = express()
+const storage = multer.diskStorage({
+     destination: (req, file, cb) => {
+          cb(null, 'uploads')
+     },
+     filename: (req, file, cb) => {
+          console.log(file)
+          cb(null, Date.now() + path.extname(file.originalname))
+     }
+})
+const upload = multer({storage: storage})
 
 dotenv.config()
 
@@ -34,7 +46,10 @@ app.use(responseLogger) // middleware that logs the response time for a request
 app.use(rateLimiter)
 app.use(requestLimitPerIP)
 
-app.use(userValidationRules(), validateUser,)
+// app.use(userValidationRules(), validateUser)
+
+// multer.. for file upload
+app.use(upload.single('avatar'))
 
 // routing
 app.use(router)
