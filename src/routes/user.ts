@@ -1,6 +1,7 @@
 import { randomInt } from "crypto"
 import { Request, Response, Router, NextFunction } from 'express';
 import { body, validationResult } from 'express-validator'
+import { userValidationRules, validateUser } from '../middleware/middleware.validateUser';
 
 const router = Router()
 
@@ -74,22 +75,10 @@ router.get('/:id', (req: Request, res: Response, next: NextFunction) => {
      })
 })
 
-router.post('/',  
+router.post('/', 
+// userValidationRules(), validateUser,
+ (req: Request, res: Response) => {
 
-// (req: Request, res: Response) => {
-
-     body('name').isString(),
-     body('age').isInt(),
-     (req: Request, res: Response) => {
-
-     const error = validationResult(req)
-     if (!error.isEmpty()) {
-          return res.status(422).json({
-               errors: error.array()
-          })          
-     }
-
-     // const user: IUser = req.body
      const { name, age } = req.body
 
      const user: IUser = {

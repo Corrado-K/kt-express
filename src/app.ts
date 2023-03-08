@@ -11,8 +11,7 @@ import router from './routes/routes'
 import { responseLogger } from './middleware/middleware.responseLogger'
 import { rateLimiter } from './middleware/middleware.rateLimiter'
 import { requestLimitPerIP } from './middleware/middleware.requestLimitPerIP'
-import { validateUser } from './middleware/middleware.validateUser'
-import { NextFunction } from 'express';
+import { userValidationRules, validateUser } from './middleware/middleware.validateUser'
 
 
 
@@ -35,7 +34,8 @@ app.use(responseLogger) // middleware that logs the response time for a request
 app.use(rateLimiter)
 app.use(requestLimitPerIP)
 
-// app.post('/', validateUser, next: NextFunction)
+app.use(userValidationRules(), validateUser,)
+
 // routing
 app.use(router)
 
