@@ -1,8 +1,9 @@
 import { Request, Response } from "express";
 import IBlogPost from "../interfaces/IBlogPost";
 import { randomInt } from 'crypto';
+import BlogPost from "../Schema/BlogPost";
 
-let blogPosts: IBlogPost[] = [
+/* let blogPosts: IBlogPost[] = [
      {
           id:1,
           title:'Let the post post',
@@ -21,195 +22,290 @@ let blogPosts: IBlogPost[] = [
           post:'Lorem ipsum notey blau inscim rhat yousah',
           comments:['Good', 'horrible', 'interesting']
      }
-]
+] */
 
-export const getAll = (req: Request, res: Response) => {
-     res.send({
-          message: `All posts`,
-          status: 200,
-          payload: blogPosts
-     })
-}
 
-export const getById = (req: Request, res: Response) => {
+export const addPost = async (req: Request, res: Response) => {
 
-     const blogPost: IBlogPost | undefined = blogPosts.find((i:IBlogPost) => i.id === Number(req.params.id))
-
-     if(!blogPost) {
-          res.status(404).json({
-               errors: [{ message: `Blog post ${req.params.id} was not found` }],
-          })
-     }
-
-     res.send({
-          message: `Blog posts ${req.params.id} found`,
-          status: 200,
-          payload: blogPost
-     })
-}
-
-export const addPost = (req: Request, res: Response) => {
-
-     const { title, post, comment } = req.body
-
-     const blogPost: IBlogPost = {
-          id: randomInt(100),
-          title: title,
-          post: post,
-          comments: comment ? comment : null
-     }
-     
-     blogPosts.push(blogPost)
-     
-     res.json({
-          message: `User created`,
-          status: 200,
-          payload: blogPosts
-     })
-}
-
-export const updatePost = (req: Request, res: Response) => {
-     const blogPost: IBlogPost | undefined = blogPosts.find((i:IBlogPost) => i.id === Number(req.params.id))
-     // const blogPost: IBlogPost | undefined = findBlogPost(Number(req.params.id))
-
-     if (!blogPost) {
-          res.status(404).json({
-               errors: [{ message: `Blog post ${req.params.id} was not found` }],
-          })
-     }
-     else {
+     try {
           const { title, post } = req.body
-          blogPost.title = title
-          blogPost.post = post
-     
-          res.send({
-               message: `Blog post ${req.params.id} updated`,
+
+          const blogPost = new BlogPost({
+               title,
+               post
+          })
+
+          const savedPost = await blogPost.save()
+          res.json({
+               message: `Blog post created`,
+               status: 200,
+               payload: savedPost
+          })
+
+     } catch (error) {
+          res.status(500).json({
+               error: error
+          })
+     }
+
+}
+
+export const getAll = async (req: Request, res: Response) => {
+     try {
+          const blogPost = await BlogPost.find()
+
+          if (!blogPost) {
+               return res.status(404).json({ errors: [{
+                    message: 'Blog posts not found'
+               }]})
+          }
+          res.json({
+               message: "All Blog post successfully fetched",
                status: 200,
                payload: blogPost
           })
+     } catch (error) {
+          res.status(500).json({
+               error: error
+          })
+     }
+}
+
+export const getById = async (req: Request, res: Response) => {
+
+     try {
+          const blogPost = await BlogPost.findById(req.params.id)
+
+          if (!blogPost) {
+               return res.status(404).json({ errors: [{
+                    message: 'Blog post not found'
+               }]})
+          }
+          res.json({
+               message: `Blog post ${req.params.id} successfully fetched`,
+               status: 200,
+               payload: blogPost
+          })
+
+     } catch (error) {
+          res.status(500).json({
+               error: error
+          })
      }
 
 }
 
-export const deletePost = (req: Request, res: Response) => {
-     const blogPost: IBlogPost | undefined = blogPosts.find((i:IBlogPost) => i.id === Number(req.params.id))
+export const updatePost = async (req: Request, res: Response) => {
+     try {
+          const blogPost = await BlogPost.findById(req.params.id)
 
-     if (!blogPost) {
-          res.status(404).json({
-               errors: [{ message: `Blog post ${req.params.id} was not found` }],
+          if (!blogPost) {
+               return res.status(404).json({
+                    errors: [{ message: `Blog post ${req.params.id} was not found` }],
+               })
+          }
+
+          const { title, post } = req.body
+          blogPost.title = title
+          blogPost.post = post
+
+          const updatedPost = await blogPost.save()
+
+          res.json({
+               message: "Blog post updated",
+               success: 200,
+               payload: updatedPost,
+          })
+
+     } catch (error) {
+          res.status(500).json({
+               error: error
           })
      }
+}
 
-     const newBlogPostList:IBlogPost[] = blogPosts.filter((i) => i !== blogPost)
 
-     res.send({
-          message: `User deleted`,
-          status: 200,
-          payload: newBlogPostList
-     })
+
+export const deletePost = async (req: Request, res: Response) => {
+     
+     try {
+          const blogPost = await BlogPost.findByIdAndDelete(req.params.id)
+
+          if (!blogPost) {
+               return res.status(404).json({
+                    errors: [{ message: `Blog post ${req.params.id} was not found` }],
+               })
+          }
+
+          res.json({
+               message: "Blog post deleted",
+               success: 200,
+          })
+
+
+
+          
+     } catch (error) {
+          res.status(500).json({
+               error: error
+          })
+     }
 
 }
 
 
 // COMMENTS
 
-export const addComment = (req: Request, res: Response) => {
-     const blogPost: IBlogPost | undefined = blogPosts.find((i:IBlogPost) => i.id === Number(req.params.id))
+export const addComment = async (req: Request, res: Response) => {
 
-     if (!blogPost) {
-          res.status(404).json({
-               errors: [{ message: `Blog post ${req.params.id} was not found` }],
-          })
-     }else{
+     try {
+          const blogPost = await BlogPost.findById(req.params.id)
+
+          if (!blogPost) {
+               return res.status(404).json({
+                    errors: [{ message: `Blog post ${req.params.id} was not found` }],
+               })
+          }
+
           // add new comment to the blog post
           const comments = blogPost.comments
           const { comment } = req.body
           
           comments?.push(comment)
 
+          const addedComment = await blogPost.save()
+
           res.send({
                message: 'Comment created',
                status: 200,
-               payload: comments
+               payload: addedComment
+          })     
+     } catch (error) {
+          res.status(500).json({
+               error: error
           })
      }
+     
+     
 } 
 
 
-export const getAllComments = (req: Request, res: Response) => {
+export const getAllComments = async (req: Request, res: Response) => {
 
-     const blogPost: IBlogPost | undefined = blogPosts.find((i:IBlogPost) => i.id === Number(req.params.id))
+     try {
+          const blogPost = await BlogPost.findById(req.params.id)
 
-     if (!blogPost) {
-          res.status(404).json({
-               errors: [{ message: `Blog post ${req.params.id} was not found` }],
-          })
-     }else{
-          // get all the comments in the blog post
+          if (!blogPost) {
+               return res.status(404).json({
+                    errors: [{ message: `Blog post ${req.params.id} was not found` }],
+               })
+          }
+
+          // Get all comments
           const comments = blogPost.comments
-          
+
           res.send({
-               message: 'Comment found',
+               message: 'All comments',
                status: 200,
                payload: comments
+          })     
+     } catch (error) {
+          res.status(500).json({
+               error: error
+          })
+     }
+     
+} 
+
+export const getCommentsByID = async (req: Request, res: Response) => {
+     try {
+          const blogPost = await BlogPost.findById(req.params.id)
+
+          if (!blogPost) {
+               return res.status(404).json({
+                    errors: [{ message: `Blog post ${req.params.id} was not found` }],
+               })
+          }
+
+          // Get comment by id
+          const comments = blogPost.comments
+
+          const returnedComment = comments[Number(req.params.cid)]
+
+          res.send({
+               message: 'All comments',
+               status: 200,
+               payload: returnedComment
+          })     
+
+     } catch (error) {
+          res.status(500).json({
+               error: error
           })
      }
 } 
 
-export const getCommentsByID = (req: Request, res: Response) => {
-     const blogPost: IBlogPost | undefined = blogPosts.find((i:IBlogPost) => i.id === Number(req.params.id))
+export const updateComment = async (req: Request, res: Response) => {
+     try {
+          const blogPost = await BlogPost.findById(req.params.id)
 
-     if (!blogPost) {
-          res.status(404).json({
-               errors: [{ message: `Blog post ${req.params.id} was not found` }],
-          })
-     }else{
-          const comments = blogPost.comments ?  blogPost.comments[Number(req.params.cid)] : null
-          
-          res.send({
-               message: 'Comment found',
-               status: 200,
-               payload: comments
-          })
-     }
-} 
+          if (!blogPost) {
+               return res.status(404).json({
+                    errors: [{ message: `Blog post ${req.params.id} was not found` }],
+               })
+          }
 
-export const updateComment = (req: Request, res: Response) => {
-     const blogPost: IBlogPost | undefined = blogPosts.find((i:IBlogPost) => i.id === Number(req.params.id))
-
-     if (!blogPost) {
-          res.status(404).json({
-               errors: [{ message: `Blog post ${req.params.id} was not found` }],
-          })
-     }else{
-          // update a comments in the blog post
+          // update comment comment to the blog post
+          const comments = blogPost.comments
           const { comment } = req.body
-
-          blogPost.comments ? blogPost.comments[Number(req.params.cid)] = comment : null
           
+          comments[Number(req.params.cid)] = comment
+
+          const updatedComment = await blogPost.save()
+
           res.send({
-               message: 'Comment update',
+               message: 'Comment created',
                status: 200,
-               payload: blogPost.comments
+               payload: {
+                    update: updatedComment
+               }
+          })     
+     } catch (error) {
+          res.status(500).json({
+               error: error
           })
      }
+     
 } 
 
-export const deleteComment = (req: Request, res: Response) => {
-     const blogPost: IBlogPost | undefined = blogPosts.find((i:IBlogPost) => i.id === Number(req.params.id))
+export const deleteComment = async (req: Request, res: Response) => {
+     try {
+          const blogPost = await BlogPost.findById(req.params.id)
 
-     if (!blogPost) {
-          res.status(404).json({
-               errors: [{ message: `Blog post ${req.params.id} was not found` }],
-          })
-     }else{
-          // update a comments in the blog post
-          const newCommentList = blogPost.comments ? blogPost.comments.filter((i) => i !== ( blogPost.comments ? blogPost.comments[Number(req.params.cid)] : null)) : null
+          if (!blogPost) {
+               return res.status(404).json({
+                    errors: [{ message: `Blog post ${req.params.id} was not found` }],
+               })
+          }
+
+          // delete comment comment to the blog post
           
+          const newCommentList = blogPost.comments ? blogPost.comments.filter((i) => i !== ( blogPost.comments ? blogPost.comments[Number(req.params.cid)] : null)) : null
+          blogPost.comments = newCommentList!
+
+          const filteredComments = await blogPost.save()
+
           res.send({
                message: 'Comment deleted',
                status: 200,
-               payload: newCommentList
+               payload: {
+                    filteredComments: filteredComments
+               }
+          })     
+     } catch (error) {
+          res.status(500).json({
+               error: error
           })
      }
 } 
+ 
